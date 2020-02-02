@@ -1,0 +1,7 @@
+numpy
+shapely
+torch
+flask
+gym
+requests
+APScheduler
