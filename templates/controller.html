@@ -1,61 +1,152 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style> 
+        #background { 
+            width: 400px; 
+            height: 400px; 
+            position: relative; 
+            background: black; 
+        } 
+        #block { 
+            width: 50px; 
+            height: 50px; 
+            background-color: white; 
+            border: 2px red solid; 
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin-right: -50%;
+            transform: translate(-50%, -50%)
+        } 
+</style> 
 </head>
 
 <body>
   <h1>Robot Driver</h1>
-  <img src="/level.png" />
+  <div id="background"> 
+        <div id="block"></div> 
+</div> 
 </body>
 
+
+<button onclick="animation(87)">Click here</button> 
+
+<button onclick="press(87)">W</button>
+<button onclick="press(83)">S</button>
+<button onclick="press(81)">Q</button>
+<button onclick="press(65)">A</button>
+
+
+
 <script>
-    let LEFT_MOTOR = 0;
+
+
+let LEFT_MOTOR = 0;
     let RIGHT_MOTOR = 0;
+    var to_post = false;
     document.addEventListener('keydown',press)
     function press(e) {
-      if (e.keyCode === 119 /* w */){
+
+    /*alert(e);*/
+      if (e.keyCode === 87 || e === 87 /* w */){
+        animation(87)
+        to_post = true;
         RIGHT_MOTOR = 180;
       }
-      if (e.keyCode === 115 /* s */){
+      if (e.keyCode === 83 || e === 83/* s */){
+        animation(83)
+        to_post = true;
         RIGHT_MOTOR = 0
       }
-      if (e.keyCode === 113 /* q */){
+      if (e.keyCode === 81 || e === 81 /* q */){
+        animation(81)
+        to_post = true;
         LEFT_MOTOR = 180
       }
-      if (e.keyCode ===  97 /* a */){
+      if (e.keyCode ===  65 || e === 65/* a */){
+        animation(65);
+        to_post = true;
         LEFT_MOTOR = 0
       }
 
-      const data = "left=" + LEFT_MOTOR + "&right=" + RIGHT_MOTOR
-      var xhr = new XMLHttpRequest();
-      xhr.open("POST", "/control", true);
-      xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-      xhr.send(data);
+      if (to_post) {
+        const data = "left=" + LEFT_MOTOR + "&right=" + RIGHT_MOTOR
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "http://localhost:5000/control", true);
+        xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        xhr.send(data);
     }
+    }
+
+    
 
     document.addEventListener('keyup',release)
     function release(e) {
-      if (e.keyCode === 119 /* w */){
+      var to_post = false;
+      if (e.keyCode === 87 /* w */){
         RIGHT_MOTOR = 90;
+        to_post = true;
       }
-      if (e.keyCode === 115 /* s */){
-        RIGHT_MOTOR = 90
+      else if (e.keyCode === 83 /* s */){
+        RIGHT_MOTOR = 90;
+        to_post = true;
       }
-      if (e.keyCode === 113 /* q */){
-        LEFT_MOTOR = 90
+      else if (e.keyCode === 81 /* q */){
+        LEFT_MOTOR = 90;
+        to_post = true;
       }
-      if (e.keyCode ===  97 /* a */){
-        LEFT_MOTOR = 90
+      else if (e.keyCode ===  65 /* a */){
+        LEFT_MOTOR = 90;
+        to_post = true;
       }
 
-      const data = "left=" + LEFT_MOTOR + "&right=" + RIGHT_MOTOR
-      var xhr = new XMLHttpRequest();
-      xhr.open("POST", "/control", true);
-      xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-      xhr.send(data);
+      if (to_post) {
+        const data = "left=" + LEFT_MOTOR + "&right=" + RIGHT_MOTOR
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "http://localhost:5000/control", true);
+        xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        xhr.send(data);
+      }
     }
 
+</script>
+
+<script>
+ function animation(e) { 
+            
+            var can = document.getElementById("block"); 
+            var i = 0; 
+            vec = 0;
+
+            if (e === 119 || e === 113) {
+              vec = -1;
+            }  else {
+              vec = 1;
+            }
+            // Call after 10 ms 
+            
+            makeframe();
+    
+            function makeframe() { 
+             if (e === 87) {
+                    can.style.top = 50 + 'px';  
+                    can.style.left = 350 + 'px'; 
+              } else if (e === 83) {
+                    can.style.top = 350 + 'px';  
+                    can.style.left = 350 + 'px';
+                    
+              } else if (e === 81) {
+                    can.style.top = 50 + 'px';  
+                    can.style.left = 50 + 'px';    
+              } else if (e === 65) {
+                    can.style.top = 350 + 'px';  
+                    can.style.left = 50 + 'px';  
+              }
+  
+            } 
+        } 
 
 </script>
 
