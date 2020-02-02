@@ -3,7 +3,6 @@ from gym import spaces
 import numpy as np
 import math
 from shapely.geometry import Polygon, Point, LinearRing
-from gym.envs.classic_control import rendering
 import shapely.affinity as affinity
 
 # neighboring files
@@ -83,10 +82,10 @@ class RCCarEnv(gym.Env):
         super(RCCarEnv, self).__init__()
 
         # Action format: left motor (-1 to 1), right motor (-1 to 1)
-        self.action_space = spaces.Box(low=np.array([-1, -1]), high=np.array([1, 1]), dtype=np.float16)
+        self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float16)
 
-        # Distances in 4 directions up to X meters
-        self.observation_space = spaces.Box(low=0, high=MAX_SENSOR_DETECT, shape=(1, 4), dtype=np.float16)
+        # Distances in 6 directions up to X meters
+        self.observation_space = spaces.Box(low=0, high=MAX_SENSOR_DETECT, shape=(6,), dtype=np.float16)
 
         # random start post in room
         start_pos_x, start_pos_y = get_random_pos() 
@@ -108,20 +107,23 @@ class RCCarEnv(gym.Env):
         self.viewer = None
 
         self.iterations = 0
+        
+        self.action_range = [[-1,1],[-1,1]]
 
     def step(self, action):
         # execution action of form np.array([left_motor, right_motor])
         self.car.update(action, self.objects)
         #print(action)
-        self.iterations += 1
+#         self.iterations += 1
 
         obs = self.measure_observations()
         reward = self.compute_reward(obs)
+        done = False
 
-        if self.iterations == MAX_ITERATIONS:
-            done = True
-        else:
-            done = False
+#         if self.iterations == MAX_ITERATIONS:
+#             done = True
+#         else:
+#             done = False
 
         return obs, reward, done, {}
 
@@ -172,6 +174,8 @@ class RCCarEnv(gym.Env):
         self.viewer = None
 
         self.iterations = 0
+        
+        return np.array([MAX_SENSOR_DETECT] * 6)
 
     def poly_to_coords(self, poly, factor=20, expand=1):
         if expand != 1:
@@ -181,6 +185,7 @@ class RCCarEnv(gym.Env):
         return points
     
     def render(self, mode='human', close=False):
+        from gym.envs.classic_control import rendering
         # Render the environment to the screen
         if self.viewer is None:
             self.viewer = rendering.Viewer(VIEWER_DIM, VIEWER_DIM)

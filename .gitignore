@@ -4,6 +4,8 @@ experiments
 reinforcement-learning
 *.vscode
 *.DS_Store
+*.pth
+*.pt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
