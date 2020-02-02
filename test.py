@@ -7,8 +7,9 @@ num_episodes = 10
 
 for _ in range(num_episodes):
     for _ in range(100):
-        # env.render()
+        env.render()
         obs, reward, done, info = env.step(np.array([1, 1]))
+        print("reward:", reward)
         if done:
             break
     env.close()

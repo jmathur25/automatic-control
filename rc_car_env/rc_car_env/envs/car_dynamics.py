@@ -144,13 +144,14 @@ class RCCar:
     def action_to_rotational_velocity(self, action):
         return MAX_ANGULAR_VELOCITY * (action / 1.0)
 
-    def update(self, action, objects):        
+    def update(self, action, objects):   
+        print(action)     
         self.update_robot_bounds(objects)
         self.find_next_frame_data(action)
 
     def get_sensor_data(self, objects):
         """ Scans environment and determines if objects are in radar and if so to which sensor and the distance """
-        to_ret = [100 for _ in range(6)]
+        to_ret = [MAX_SENSOR_DETECT for _ in range(6)]
         for i, trap in enumerate(self.sensor_fields):
             for obj in objects[1:]: # ignore car at index 0
                 if trap.contains(obj.poly) or trap.intersects(obj.poly):

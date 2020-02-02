@@ -8,7 +8,7 @@ import shapely.affinity as affinity
 # neighboring files
 from .car_dynamics import RCCar, MAX_SENSOR_DETECT
 from .config import VIEWER_DIM, MAX_SENSOR_DETECT, ROOM_DIM_X, ROOM_DIM_Y, NUM_OBJECTS, OBJECT_DIM, OBJECT_MIN_DIST, \
-                INITIAL_MOTOR_LEFT, INITIAL_MOTOR_RIGHT, MAX_ITERATIONS, FRAMES_PER_SECOND, MAX_ANGULAR_VELOCITY, WHEEL_DIAMETER
+                INITIAL_MOTOR_LEFT, INITIAL_MOTOR_RIGHT, MAX_ITERATIONS, FRAMES_PER_SECOND, MAX_ANGULAR_VELOCITY, WHEEL_DIAMETER, RC_ROBOT_DIAMETER
 
 """
 --------------------------------
@@ -135,33 +135,44 @@ class RCCarEnv(gym.Env):
     def compute_reward(self, obs):
         ''' Compute reward '''
         penalties = self.car.get_penalties()
-        speed = math.sqrt((self.car.cur_x - self.car.prev_x)**2 + (self.car.cur_y - self.car.prev_y)**2) * 1/FRAMES_PER_SECOND
+        speed = math.sqrt((self.car.cur_x - self.car.prev_x)**2 + (self.car.cur_y - self.car.prev_y)**2)
         speed_max = MAX_ANGULAR_VELOCITY * WHEEL_DIAMETER / 2 * 1/FRAMES_PER_SECOND
         speed_norm = speed / speed_max
 
-        speed_reward = 10 * speed_norm
+        speed_reward = 1 * speed_norm
 
-        # penalize being near an obstacle and going fast
-        a = 50
+        # penalize being near an obstacle
+        a = 1
         closest_obs = np.min(obs)
-        if closest_obs <= 0:
-            closest_obs = 0.01
-        obstacle_reward = -a * (speed_norm * 1/closest_obs)
+        if closest_obs <= 0.1:
+            closest_obs = 0.1
+        obstacle_reward = -a * 1/closest_obs # 
 
-        # each penalty is -20
-        penalties_reward = penalties * -20
+        # each penalty is -10
+        penalties_reward = penalties * -10
 
         return speed_reward + obstacle_reward + penalties_reward
 
-    def reset(self):
-        # random start post in room
-        start_pos_x, start_pos_y = get_random_pos() 
-        self.car = RCCar(start_pos_x, start_pos_y)
-        self.objects = []
-        self.objects.append(self.car)
-        while len(self.objects) != NUM_OBJECTS + 1:
-            self.objects.append(generate_random_object(self.objects))
-        
+    def reset(self, simple=False):
+        if simple:
+            start_pos_x = ROOM_DIM_X / 2
+            start_pos_y = ROOM_DIM_Y / 8
+            self.car = RCCar(start_pos_x, start_pos_y)
+            self.objects = []
+            self.objects.append(self.car)
+            x, y = ROOM_DIM_X / 2, ROOM_DIM_Y / 4 # center of the room
+            obj = RoomObject(x, y)
+            self.objects.append(obj)
+
+        else:
+            # random start post in room
+            start_pos_x, start_pos_y = get_random_pos() 
+            self.car = RCCar(start_pos_x, start_pos_y)
+            self.objects = []
+            self.objects.append(self.car)
+            while len(self.objects) != NUM_OBJECTS + 1:
+                self.objects.append(generate_random_object(self.objects))
+            
         leftwall = RoomWall(0, ROOM_DIM_Y/2, 1, ROOM_DIM_Y)
         rightwall = RoomWall(ROOM_DIM_X, ROOM_DIM_Y/2, 1, ROOM_DIM_Y)
         upwall = RoomWall(ROOM_DIM_X/2, ROOM_DIM_Y, ROOM_DIM_X, 1)
