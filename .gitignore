@@ -1,6 +1,9 @@
 # mine
+<<<<<<< HEAD
 experiments
 reinforcement-learning
+*.vscode
+*.DS_Store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
