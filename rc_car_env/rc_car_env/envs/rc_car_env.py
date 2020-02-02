@@ -2,9 +2,12 @@ import gym
 from gym import spaces
 import numpy as np
 from shapely.geometry import Polygon, Point, LinearRing
+from gym.envs.classic_control import rendering
 
 RANDOM_SEED = 7
 np.random.seed(RANDOM_SEED)
+
+VIEWER_DIM = 500 # screen pixels
 
 MAX_SENSOR_DETECT = 5
 ROOM_DIM_X = 20
@@ -79,8 +82,6 @@ def print_all_object_locations():
         print(f'Obj x,y: {obj.center_x},{obj.center_y}')
     print('\n')
 
-print_all_object_locations()
-
 class RCCarEnv(gym.Env):
   """Custom Environment that follows gym interface"""
   metadata = {'render.modes': ['human']}
@@ -93,16 +94,30 @@ class RCCarEnv(gym.Env):
 
     # Distances in 4 directions up to X meters
     self.observation_space = spaces.Box(low=0, high=MAX_SENSOR_DETECT, shape=(1, 4), dtype=np.float16)
+    
+    self.viewer = None
 
   def step(self, action):
     # Execute one time step within the environment
 
-    return observation, reward
+    obs = np.array([2, 3, 4, 3])
+    reward = 0.5
+    done = False
+    return obs, reward, done, {}
     
   def reset(self):
     # Reset the state of the environment to an initial state
-
+    
+    pass
     
   def render(self, mode='human', close=False):
     # Render the environment to the screen
+    if self.viewer is None:
+        self.viewer = rendering.Viewer(VIEWER_DIM, VIEWER_DIM)
+
+    cart = rendering.FilledPolygon([(100,100), (100,200), (200,200), (200,100)])
+    self.viewer.add_geom(cart)
+    self.viewer.render()
+    return None
+
 
