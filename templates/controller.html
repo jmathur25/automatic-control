@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+  <h1>Robot Driver</h1>
+  <img src="/level.png" />
+</body>
+
+<script>
+    let LEFT_MOTOR = 0;
+    let RIGHT_MOTOR = 0;
+    document.addEventListener('keydown',press)
+    function press(e) {
+      if (e.keyCode === 119 /* w */){
+        RIGHT_MOTOR = 180;
+      }
+      if (e.keyCode === 115 /* s */){
+        RIGHT_MOTOR = 0
+      }
+      if (e.keyCode === 113 /* q */){
+        LEFT_MOTOR = 180
+      }
+      if (e.keyCode ===  97 /* a */){
+        LEFT_MOTOR = 0
+      }
+
+      const data = "left=" + LEFT_MOTOR + "&right=" + RIGHT_MOTOR
+      var xhr = new XMLHttpRequest();
+      xhr.open("POST", "/control", true);
+      xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+      xhr.send(data);
+    }
+
+    document.addEventListener('keyup',release)
+    function release(e) {
+      if (e.keyCode === 119 /* w */){
+        RIGHT_MOTOR = 90;
+      }
+      if (e.keyCode === 115 /* s */){
+        RIGHT_MOTOR = 90
+      }
+      if (e.keyCode === 113 /* q */){
+        LEFT_MOTOR = 90
+      }
+      if (e.keyCode ===  97 /* a */){
+        LEFT_MOTOR = 90
+      }
+
+      const data = "left=" + LEFT_MOTOR + "&right=" + RIGHT_MOTOR
+      var xhr = new XMLHttpRequest();
+      xhr.open("POST", "/control", true);
+      xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+      xhr.send(data);
+    }
+
+
+</script>
+
+</body>
+</html>
