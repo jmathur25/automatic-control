@@ -15,6 +15,6 @@ This makes our custon environment and physics engine. The source code for that i
 
 To train the RL model, go to `Reinforcement-Learning-Tutorial/ddpg walker/DDPG.ipynb` and run that notebook. Move the resulting .pth files into the `model` directory.
 
-To see how the model performs, run `python simulation.py simple 100 1`. This shows (in a very toy case) how the model safety checks the usual moving algorithm and cuts it off before it runs into the obstacle. `simple` represents a toy case, and `regular` is the usual paramater. The other two arguments are steps and episodes respectively. A new episode lays out a new random environment.
+To see how the model performs, run `python simulation.py simple 1000`. This shows (in a very toy case) how the model safety checks the usual moving algorithm and cuts it off before it runs into the obstacle. `simple` represents the toy case, and `regular` is the usual paramater. The other two arguments are steps and episodes respectively. A new episode lays out a new random environment.
 
-Lastly, to interact with the RC car, connect to the car's wifi and run `python application.py`. Navigate to `127.0.0.1:5000` and use the (rather crummy) interface to drive the car. The model should kick in and prevent you from ramming into a wall or other kind of obstacle.
+Lastly, to interact with the physical RC car, connect to the car's onboard wifi server and run `python application.py`. Navigate to `127.0.0.1:5000` and use the (rather crummy) interface to drive the car. The model should kick in and prevent you from ramming into a wall or other kind of obstacle.
