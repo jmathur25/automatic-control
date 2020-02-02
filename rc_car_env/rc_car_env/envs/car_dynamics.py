@@ -31,8 +31,8 @@ class RCCar:
         self.prev_x = self.cur_x
         self.prev_y = self.cur_y
 
-        self.cur_theta = 0
-        self.next_theta = 0
+        self.cur_theta = math.pi / 2
+        self.next_theta = self.cur_theta
 
         robot_hex = create_hexagon(self.cur_x, self.cur_y, RC_ROBOT_DIAMETER / 2)
         robot_shell = create_hexagon(self.cur_x, self.cur_y, RC_ROBOT_DIAMETER / 2 + MAX_SENSOR_DETECT)
@@ -54,13 +54,46 @@ class RCCar:
         wheel_angular_velocities = self.action_to_rotational_velocity(action)
         wheel_linear_velocities = wheel_angular_velocities * WHEEL_DIAMETER / 2
 
-        print('WHEEL VELOCITIES:', wheel_linear_velocities)
-
         w = (wheel_linear_velocities[1] - wheel_linear_velocities[0]) / WHEEL_DISTANCE
+        if (wheel_linear_velocities[1] - wheel_linear_velocities[0]) < 0.01:
+            self.next_x = self.cur_x + wheel_linear_velocities[0] * 1/FRAMES_PER_SECOND * math.cos(self.cur_theta)
+            self.next_y = self.cur_y + wheel_linear_velocities[0] * 1/FRAMES_PER_SECOND * math.sin(self.cur_theta)
+            self.next_theta = self.cur_theta
+            return
+        # turning in place, use one motor
+        elif (wheel_linear_velocities[1] + wheel_linear_velocities[0]) < 0.01:
+            wheel_linear_velocities[1] = 0
+
+        r = WHEEL_DISTANCE / 2 * ((wheel_linear_velocities[1] + wheel_linear_velocities[0]) / (wheel_linear_velocities[1] - wheel_linear_velocities[0]))
+        icc = [self.cur_x - r * math.sin(self.cur_theta), self.cur_y + r * math.cos(self.cur_theta)]
+
         w_t = w * 1/FRAMES_PER_SECOND
-        self.next_x = math.cos(w_t) * self.cur_x  - math.sin(w_t) * self.cur_y
-        self.next_y = math.sin(w_t) * self.cur_x + math.cos(w_t) * self.cur_y
+        mod_x, mod_y = self.cur_x - icc[0], self.cur_y - icc[1]
+        self.next_x = math.cos(w_t) * mod_x  - math.sin(w_t) * mod_y
+        self.next_y = math.sin(w_t) * mod_x + math.cos(w_t) * mod_y
+        self.next_x += icc[0]
+        self.next_y += icc[1]
         self.next_theta = w_t + self.cur_theta
+
+    def apply_transform(self, dx, dy):
+        for i in range(len(self.sensor_fields)):
+            trap = self.sensor_fields[i]
+            # apply dx, dy
+            trap = affinity.translate(trap, dx, dy)
+            self.sensor_fields[i] = trap
+        # update robot polygon
+        self.poly = affinity.translate(self.poly, dx, dy)
+
+        self.cur_x += dx
+        self.cur_y += dy
+    
+    def apply_rotation(self, dtheta):
+        for i in range(len(self.sensor_fields)):
+            trap = self.sensor_fields[i]
+            # apply dtheta
+            trap = affinity.rotate(trap, dtheta * 180/(math.pi), 'center')
+            self.sensor_fields[i] = trap
+        self.poly = affinity.rotate(self.poly, dtheta * 180/(math.pi), 'center')
 
     def update_robot_bounds(self, objects):
         self.prev_x = self.cur_x
@@ -70,20 +103,8 @@ class RCCar:
         dx = self.next_x - self.cur_x
         dy = self.next_y - self.cur_y
         dtheta = self.next_theta - self.cur_theta
-
-        for i in range(len(self.sensor_fields)):
-            trap = self.sensor_fields[i]
-            # apply dx, dy
-            trap = affinity.translate(trap, dx, dy)
-
-            # apply dtheta
-            trap = affinity.rotate(trap, dtheta * 180/(math.pi), 'center')
-
-            self.sensor_fields[i] = trap
-
-        # update robot polygon
-        self.poly = affinity.translate(self.poly, dx, dy)
-        self.poly = affinity.rotate(self.poly, dtheta * 180/(math.pi), 'center')
+        self.apply_transform(dx, dy)
+        self.apply_rotation(dtheta)
 
         # absolutes
         self.cur_x = self.next_x
@@ -95,17 +116,25 @@ class RCCar:
                 self.penalties += 1
         
         # keep robot in bounds
-        
         if self.cur_x > ROOM_DIM_X - RC_ROBOT_DIAMETER / 2:
-            self.cur_x = ROOM_DIM_X - RC_ROBOT_DIAMETER / 2
+            dx = ROOM_DIM_X - RC_ROBOT_DIAMETER / 2 - self.cur_x
+            self.apply_transform(dx, 0)
+            self.next_x = self.cur_x
+            
         elif self.cur_x < 0 + RC_ROBOT_DIAMETER / 2:
-            self.cur_x = 0 + RC_ROBOT_DIAMETER / 2
-
+            dx = (0 + RC_ROBOT_DIAMETER / 2) - self.cur_x
+            self.apply_transform(dx, 0)
+            self.next_x = self.cur_x
        
         if self.cur_y > ROOM_DIM_Y - RC_ROBOT_DIAMETER / 2:
-            self.cur_y = ROOM_DIM_Y - RC_ROBOT_DIAMETER / 2
+            dy = (ROOM_DIM_Y - RC_ROBOT_DIAMETER / 2) - self.cur_y
+            self.apply_transform(0, dy)
+            self.next_y = self.cur_y
+
         elif self.cur_y < 0 + RC_ROBOT_DIAMETER / 2:
-            self.cur_y = 0 + RC_ROBOT_DIAMETER / 2
+            dy = (0 + RC_ROBOT_DIAMETER / 2) - self.cur_y
+            self.apply_transform(0, dy)
+            self.next_y = self.cur_y
         
     def get_penalties(self):
         penalties = self.penalties
@@ -121,7 +150,7 @@ class RCCar:
 
     def get_sensor_data(self, objects):
         """ Scans environment and determines if objects are in radar and if so to which sensor and the distance """
-        to_ret = [MAX_SENSOR_DETECT for _ in range(6)]
+        to_ret = [100 for _ in range(6)]
         for i, trap in enumerate(self.sensor_fields):
             for obj in objects[1:]: # ignore car at index 0
                 if trap.contains(obj.poly) or trap.intersects(obj.poly):
